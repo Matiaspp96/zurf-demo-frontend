@@ -128,9 +128,9 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center p-24">
-      <header className="flex items-center space-x-4 w-full justify-between">
-        <Card className="bg-zinc-100">
+    <main className="flex min-h-screen flex-col items-center py-10 px-5 md:p-24">
+      <header className="flex max-md:flex-col-reverse items-center space-x-4 w-full justify-between gap-5">
+        <Card className="max-md:w-full bg-zinc-100">
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Image src={WalletVector} width={40} height={40} alt="wallet" />
@@ -151,14 +151,17 @@ export default function Home() {
             </div>
           </CardHeader>
         </Card>
-        <h1 className="bg-clip-text text-transparent bg-gradient-to-r from-pink-800 to-violet-800 text-4xl font-bold border-b-2">
-          Balance Your Wallet
+        <h1 className="bg-clip-text max-md:hidden text-transparent bg-gradient-to-r from-pink-800 to-violet-800 text-4xl font-bold border-b-2">
+          Portfolio Balance
         </h1>
         {!isConnected ? (
           <Button onClick={() => open()}>Connect Wallet</Button>
         ) : (
           <Button onClick={() => open()}>Disconnect Wallet</Button>
         )}
+        <h1 className="bg-clip-text text-transparent bg-gradient-to-r from-pink-800 to-violet-800 text-3xl font-bold border-b-2">
+          Portfolio Balance
+        </h1>
       </header>
       {isConnected && (
         <Table className="mt-4 border">
@@ -173,7 +176,7 @@ export default function Home() {
           <TableBody>
             {tokens.map((token) => (
               <TableRow key={token.symbol}>
-                <TableCell className="flex items-center space-x-2">
+                <TableCell className="flex items-center space-x-2 w-max">
                   <Image
                     src={token.symbol === "ZRF" ? ZurfLogo : PolygonVector}
                     width={40}
