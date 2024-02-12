@@ -1,113 +1,259 @@
+"use client";
+import ZurfLogo from "@/assets/icons/Zurf_logo.webp";
+import PolygonVector from "@/assets/icons/polygon-vector.svg";
+import WalletVector from "@/assets/icons/wallet-vector.svg";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useBalance } from "@/hooks/useBalance";
+import {
+  balanceToUsd,
+  cn,
+  parseBalance,
+  percentageChange,
+  priceChange,
+  totalBalance,
+} from "@/lib/utils";
+import { getHistoryPrice } from "@/services/getHistoryPrice.service";
+import { getPrice } from "@/services/getPrice.service";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+
+const tokens: {
+  name: string;
+  symbol: string;
+  coinGeckoId: string;
+  address: `0x${string}`;
+}[] = [
+  {
+    name: "Zurf",
+    symbol: "ZRF",
+    coinGeckoId: "zurf",
+    address: "0x232804231dE32551F13A57Aa3984900428aDf990",
+  },
+  {
+    name: "Matic",
+    symbol: "MATIC",
+    coinGeckoId: "matic-network",
+    address: "0x0000000000000000000000000000000000001010",
+  },
+];
 
 export default function Home() {
+  const { open } = useWeb3Modal();
+  const { isConnected } = useAccount();
+
+  /* Tokens Balance */
+  const { address } = useAccount();
+  const ZurfToken = useBalance(
+    tokens[0].address,
+    "0x6914c5b9ab9b49bCF84f980Ff773Bf2ae6186A6D"
+  );
+  const MaticToken = useBalance(tokens[1].address, address!);
+
+  /* Get Price Token */
+  const [zurfPrice, setZurfPrice] = useState<number>(0);
+  const [maticPrice, setMaticPrice] = useState<number>(0);
+  const [zurfYesterdayPrice, setZurfYesterdayPrice] = useState<number>(0);
+  const [maticYesterdayPrice, setMaticYesterdayPrice] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const getPriceAndUpdateState = async (token: string) => {
+    try {
+      const price = await getPrice(token);
+      switch (token) {
+        case tokens[0].coinGeckoId:
+          setZurfPrice(price);
+          break;
+        case tokens[1].coinGeckoId:
+          setMaticPrice(price);
+          break;
+      }
+      return price;
+    } catch (error) {
+      console.error(error);
+      return 0;
+    }
+  };
+
+  const getHistoryPriceAndUpdateState = async (token: string, date: string) => {
+    try {
+      const price = await getHistoryPrice(token, date);
+      switch (token) {
+        case tokens[0].coinGeckoId:
+          setZurfYesterdayPrice(price);
+          break;
+        case tokens[1].coinGeckoId:
+          setMaticYesterdayPrice(price);
+          break;
+      }
+      return price;
+    } catch (error) {
+      console.error(error);
+      return 0;
+    }
+  };
+
+  useEffect(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dd = String(yesterday.getDate()).padStart(2, "0");
+    const mm = String(yesterday.getMonth() + 1).padStart(2, "0");
+    const yyyy = yesterday.getFullYear();
+    const date = `${dd}-${mm}-${yyyy}`;
+
+    const fetchPrices = async () => {
+      await Promise.all([
+        getPriceAndUpdateState(tokens[0].coinGeckoId),
+        getPriceAndUpdateState(tokens[1].coinGeckoId),
+        getHistoryPriceAndUpdateState(tokens[0].coinGeckoId, date),
+        getHistoryPriceAndUpdateState(tokens[1].coinGeckoId, date),
+      ]).catch((error) => {
+        console.error(error);
+      });
+    };
+
+    fetchPrices();
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <main className="flex min-h-screen flex-col items-center p-24">
+      <header className="flex items-center space-x-4 w-full justify-between">
+        <Card className="bg-zinc-100">
+          <CardHeader>
+            <div className="flex items-center space-x-2">
+              <Image src={WalletVector} width={40} height={40} alt="wallet" />
+              <CardTitle className="text-xl">
+                Wallet -{" "}
+                {zurfPrice > 0 &&
+                  maticPrice > 0 &&
+                  totalBalance([
+                    { balance: ZurfToken.data?.toString()!, price: zurfPrice },
+                    {
+                      balance: MaticToken.data?.toString()!,
+                      price: maticPrice,
+                    },
+                  ]).toFixed(2)}{" "}
+                US$
+              </CardTitle>
+            </div>
+          </CardHeader>
+        </Card>
+        <h1 className="bg-clip-text text-transparent bg-gradient-to-r from-pink-800 to-violet-800 text-4xl font-bold border-b-2">
+          Balance Your Wallet
+        </h1>
+        {!isConnected ? (
+          <Button onClick={() => open()}>Connect Wallet</Button>
+        ) : (
+          <Button onClick={() => open()}>Disconnect Wallet</Button>
+        )}
+      </header>
+      {isConnected && (
+        <Table className="mt-4 border">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-gray-400">ACTIVO</TableHead>
+              <TableHead className="text-gray-400">PRECIO</TableHead>
+              <TableHead className="text-gray-400">BALANCE</TableHead>
+              <TableHead className="text-gray-400">VALOR</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tokens.map((token) => (
+              <TableRow key={token.symbol}>
+                <TableCell className="flex items-center space-x-2">
+                  <Image
+                    src={token.symbol === "ZRF" ? ZurfLogo : PolygonVector}
+                    width={40}
+                    height={40}
+                    alt="wallet"
+                  />
+                  <span>
+                    {token.name} ({token.symbol})
+                  </span>
+                </TableCell>
+                <TableCell>
+                  {zurfPrice >= 0 && token.symbol === "ZRF"
+                    ? zurfPrice
+                    : maticPrice >= 0 && maticPrice}{" "}
+                  US$
+                </TableCell>
+                <TableCell>
+                  {zurfPrice >= 0 &&
+                    maticPrice >= 0 &&
+                    parseBalance(
+                      token.symbol === "ZRF"
+                        ? ZurfToken.data?.toString()!
+                        : MaticToken.data?.toString()!
+                    ).toFixed(2)}{" "}
+                  {token.symbol}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-bold">
+                      {zurfPrice >= 0 &&
+                        maticPrice >= 0 &&
+                        balanceToUsd(
+                          token.symbol === "ZRF"
+                            ? ZurfToken.data?.toString()!
+                            : MaticToken.data?.toString()!,
+                          token.symbol === "ZRF" ? zurfPrice : maticPrice
+                        )}{" "}
+                      US$
+                    </span>
+                    <Badge
+                      className={cn(
+                        "bg-green-600/50 w-max text-zinc-900 hover:bg-green-500/70",
+                        {
+                          "bg-red-600/50 hover:bg-red-500/70":
+                            percentageChange(
+                              token.symbol === "ZRF" ? zurfPrice : maticPrice,
+                              token.symbol === "ZRF"
+                                ? zurfYesterdayPrice
+                                : maticYesterdayPrice
+                            ) < 0,
+                        }
+                      )}
+                      variant="secondary"
+                    >
+                      {zurfPrice >= 0 &&
+                        maticPrice >= 0 &&
+                        Number(
+                          percentageChange(
+                            token.symbol === "ZRF" ? zurfPrice : maticPrice,
+                            token.symbol === "ZRF"
+                              ? zurfYesterdayPrice
+                              : maticYesterdayPrice
+                          ).toFixed(2)
+                        )}
+                      % (
+                      {zurfPrice >= 0 &&
+                        maticPrice >= 0 &&
+                        priceChange(
+                          token.symbol === "ZRF" ? zurfPrice : maticPrice,
+                          token.symbol === "ZRF"
+                            ? zurfYesterdayPrice
+                            : maticYesterdayPrice
+                        ).toFixed(2)}
+                      US$)
+                    </Badge>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </main>
   );
 }
