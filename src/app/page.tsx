@@ -137,6 +137,7 @@ export default function Home() {
                 Wallet -{" "}
                 {zurfPrice > 0 &&
                   maticPrice > 0 &&
+                  isConnected &&
                   totalBalance([
                     { balance: ZurfToken.data?.toString()!, price: zurfPrice },
                     {
