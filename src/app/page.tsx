@@ -57,7 +57,8 @@ export default function Home() {
   const { address } = useAccount();
   const ZurfToken = useBalance(
     tokens[0].address,
-    "0x6914c5b9ab9b49bCF84f980Ff773Bf2ae6186A6D"
+    // "0x6914c5b9ab9b49bCF84f980Ff773Bf2ae6186A6D"
+    address!
   );
   const MaticToken = useBalance(tokens[1].address, address!);
 
