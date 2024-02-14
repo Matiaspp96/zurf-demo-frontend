@@ -5,6 +5,7 @@ import { WagmiProvider, cookieToInitialState } from "wagmi";
 import "./globals.css";
 import { ContextProvider } from "@/wagmi/context";
 import { headers } from "next/headers";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,7 +23,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <ContextProvider initialState={initialState}>
-        <body className={inter.className}>{children}</body>
+        <body>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </body>
       </ContextProvider>
     </html>
   );

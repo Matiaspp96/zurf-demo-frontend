@@ -4,7 +4,7 @@ export const getHistoryPrice = async (token: string, date: string): Promise<numb
             `https://api.coingecko.com/api/v3/coins/${token}/history?date=${date}&localization=false`
         );
         const data = await response.json();
-        return data.market_data.current_price.usd || 0;
+        return isNaN(data.market_data.current_price.usd) ? 0 : data.market_data.current_price.usd;
     } catch (error) {
         throw new Error("Error fetching price");
     }
